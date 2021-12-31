@@ -1,0 +1,214 @@
+---
+title: "DDL Cookbook"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,fig.width=8, fig.height=6)
+```
+
+<font>
+## Boxplots
+
+This is a boxplot.
+
+```{r echo=FALSE}
+boxplot(USArrests$Rape)
+```
+
+For a given bit of data, a boxplot shows us three things: the quartiles, the mean and the outliers (if any). The bottom tip of the line is the minimum value and the upper tip is the maximum value. The lower end of the box is the first quartile, the line across the middle is the second qartile (the mean), and the top of the box is the third quartile. Outliers are represented as points far above or far below the main boxplot. 
+
+So it's a nice tool that shows us the spread of the data.
+
+
+## Boxplots in ggplot2 
+
+Let's bring the tidyverse into R Studio.
+
+```{r include=FALSE}
+library(tidyverse)
+```
+```{r eval=FALSE}
+library(tidyverse)
+```
+
+The dataset we'll be using is called mpg.
+
+```{r warning=FALSE}
+mpg
+```
+It's a reasonably small dataset containing information on different car models. 
+
+Let's use a boxplot to visualise the mean and quartiles of hwy (highway miles per gallon).
+```{r}
+ggplot(mpg, aes(y = hwy)) + 
+  geom_boxplot()
+```
+
+Note that we specified that hwy should go on the y-axis. 
+What happens if it goes on the x-axis?
+
+From the boxplot above, we have a good idea of how most of the cars in our 
+dataset perform on the highway. Although there are a couple of very efficient outliers 
+pushing over 40 miles a gallon, most are within the 20's. 
+
+But is this true for every type of car? Wouldn't a midsize car do better than, say,
+an SUV?
+
+We should find out how different <i>classes</i> of cars do. 
+How many classes of cars are there?
+
+```{r}
+mpg %>% 
+  group_by(class) %>% 
+  count()
+```
+
+So we need to tell ggplot2 to create 7 boxplots. The dataset needs to be split up
+according to the class.
+
+We can put class on the x-axis, and ggplot2 should create 7 boxplots.
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_boxplot()
+```
+
+Pickups and SUVs don't perform well, which is reasonable since they are big cars.
+
+Something about how boxplots work emerges. 
+
+Boxplots only capture numerical data. Then you can have different boxplots to compare, 
+but those different boxplots are created on the basis of some type of categorical data.
+
+Think about points, which can have both x and y axes. But a boxplot can only have
+a y-axis. The x-axis can, at best, be used to show different subdivisions of whatever
+data the boxplot is capturing along the y-axis.
+
+# Colours
+
+Let's further highlight each boxplot by assigning them different colours.
+Like every geom that isn't a line or point, geom_boxplot has two arguments for colour: <i>col</i> and <i>fill</i>. The col argument will change the <i>border colour</i> and
+the fill argument will change the <i>fill colour</i>.
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_boxplot(aes(fill = class))
+```
+
+Note that fill goes inside aes(). This is because we assigned fill to class, which
+is a part of the data. If we wanted one fill colour regardless of the data( such as fill = "red"), we wouldn't put it in aes().
+
+# More colours
+Let's bring in some more palettes to play with.
+
+```{r include=FALSE}
+library(viridis)
+```
+```{r, eval=FALSE}
+library(viridis)
+```
+
+The viridis package has several fun palettes. It's very popular due to it's visual
+appeal as well as the fact that it's colourblind-friendly.
+
+There are two types of colour palettes in R: discrete and continuous.
+Discrete colours are a set of distinct individual colours - think of a painter's
+palette.
+Continuous colours are a gradual gradient - one colour gradually shifts into another.
+
+Think about our colour assignment - it's done on the basis of a categorical variable.
+That means that we need a set of distinct colours. This is something we need to specify.
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_boxplot(aes(fill = class)) + 
+  scale_fill_viridis_d()
+
+```
+
+There are four main functions in viridis:
+
+```{r, eval=FALSE}
+scale_fill_viridis_c()
+scale_fill_viridis_d()
+scale_colour_viridis_c()
+scale_colour_viridis_d()
+```
+The c and d at the end stand for continuous and discrete. Don't confuse c for
+categorical! 
+
+Then there are separate functions for colour and fill. So if we use fill, we need
+to use scale_fill... and if we use colour, we need to use scale_colour...
+
+
+
+# Homework
+
+What are some of the other categorical variables in mpg?
+Do you think the type of drive train (drv) has any impact on the mileage?
+
+
+<p>
+  <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample1" role="button" aria-expanded="false" aria-controls="collapseExample1">
+    Click For Answer
+  </a>
+</p>
+<div class="collapse" id="collapseExample1">
+  <div class="card card-body">
+
+```{r}
+ggplot(mpg, aes(drv, hwy)) + 
+  geom_boxplot(aes(fill = drv)) + 
+  scale_fill_viridis_d(option = "C")
+
+```
+
+  </div>
+</div>
+
+
+
+Try to make boxplots for iris, another dataset.
+Which variables (columns) can we make a boxplot for?
+Which variables (columns) can be used to segment the boxplots?
+
+
+<p>
+  <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample1" role="button" aria-expanded="false" aria-controls="collapseExample1">
+    Click For Answer
+  </a>
+</p>
+<div class="collapse" id="collapseExample1">
+  <div class="card card-body">
+
+```{r}
+ggplot(iris, aes(Species, Petal.Length)) + 
+  geom_boxplot(aes(fill = Species), alpha = 0.5) + 
+  scale_fill_viridis_d(option = "E")
+
+```
+
+  </div>
+</div>
+
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+
+
+
+
+
+
