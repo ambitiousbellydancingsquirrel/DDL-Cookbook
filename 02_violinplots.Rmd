@@ -1,0 +1,201 @@
+---
+title: "DDL Cookbook 2 | Violin Plots"
+author: "Pushkar Sarkar"
+date: "01/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,fig.width=8, fig.height=6)
+```
+
+# Violin Plots
+
+## tidyverse
+
+Let's bring the tidyverse into R Studio.
+
+```{r include=FALSE}
+library(tidyverse)
+```
+```{r eval=FALSE}
+library(tidyverse)
+```
+
+A violin plot is a more advanced version of a boxplot. Let's compare the two side-by-side. 
+
+```{r warning=FALSE}
+
+ggplot(mpg, aes(drv, hwy)) + 
+  geom_boxplot() + 
+  geom_violin(alpha = 0.2)
+
+```
+
+The violin plot is a little more confusing, but shows us a little more about where
+the data is concentrated. 
+
+## The Bikeshare Dataset
+
+To explore violin plots, let's use a new dataset. 
+
+The ISLR2 package contains an interesting dataset called Bikeshare. It contains the hourly and daily count of rental bikes between the years 2011 and 2012, along with weather and seasonal information. 
+
+
+```{r, eval = FALSE}
+install.packages("ISLR2")
+library(ISLR2)
+
+Bikeshare
+
+```
+
+This is long and difficult to read. Let's make Bikeshare a tibble first.
+
+
+```{r, eval = FALSE}
+install.packages("ISLR2")
+library(ISLR2)
+
+Bikeshare <- Bikeshare %>% as_tibble()
+Bikeshare
+
+```
+```{r echo=FALSE, warning=FALSE}
+library(ISLR2)
+Bikeshare <- Bikeshare %>% as_tibble()
+Bikeshare
+
+```
+
+With over 8,000 rows and 15 columns, Bikeshare is not a small dataset. 
+Before doing anything, let us set up a question. And before setting up a question, let's spend a few moments understanding the data that we have. To understand the data better, we can look at <https://cran.r-project.org/web//packages/ISLR2/ISLR2.pdf>, which is the manual for the ISLR2 package. It contains important information on the data (search for "Bikeshare").
+
+The season column is the month, and obviously a categorical variable. How many seasons are there (and how much data do we have for each season)?
+
+```{r}
+Bikeshare %>% count(season)
+```
+
+We have the 4 seasons, numbered from 1 to 4 instead of named. 
+
+The registered column is the number of registered bikers, and obviously a numerical variable. What's the average number of registered bikers across the whole year?
+
+```{r}
+mean(Bikeshare$registered)
+```
+
+We can perhaps ask whether there is any difference in average registrations across the seasons?
+
+```{r}
+ggplot(Bikeshare, aes(season, registered)) + 
+  geom_violin()
+
+```
+
+Something's gone wrong - we were supposed to have four violin plots. Our code was correct, so there must be an issue in the dataset itself.
+
+## Converting to Factors with dplyr
+
+Taking another look at our dataset, season is a <i>double</i>. That's what R calls numerical variables. So while we know that seasons are categorical, R didn't understand that because the seasons are numbered from 1 to 4. It assumed that this must be numerical.
+
+We need to tell it to consider it a categorical variable, or in R's terms, a <i>factor.</i>
+
+```{r, eval=FALSE}
+Bikeshare %>% 
+  mutate(season = as.factor(season))
+
+```
+
+Don't forget to assign this entire thing back to Bikeshare! Otherwise it'll forget that we changed anything and revert to whatever it was before.
+
+```{r}
+Bikeshare <- Bikeshare %>% 
+  mutate(season = as.factor(season))
+```
+
+And now we can proceed with our plot.
+
+```{r}
+ggplot(Bikeshare) + 
+  geom_violin(aes(season, registered))
+
+```
+
+
+Season 1 (which is winter) has slightly lower ridership. But it's not perfectly clear how much lower, because we lost the mean line. Like any plot, violin plots have their drawbacks.
+
+But geom_violin has a special argument just for this.
+
+```{r}
+ggplot(Bikeshare, aes(season, registered)) + 
+  geom_violin(draw_quantiles = 0.5)
+
+```
+
+Now it's much clearer. But finally we also need the exact numbers.
+
+```{r}
+Bikeshare %>% 
+  group_by(season) %>% 
+  summarise(average_riders = mean(registered))
+```
+So while the yearly average is 115 registered riders, we can see that from winter to summer, the average ridership actually doubles. An inference that we could have perhaps made without the help of data.
+
+
+## Homework
+
+Spend some time exploring the Bikeshare dataset. Are there any other categorical variables?
+Could registered ridership be dependent on them too?
+
+<p>
+  <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample1" role="button" aria-expanded="false" aria-controls="collapseExample1">
+    Click For Answer
+  </a>
+</p>
+<div class="collapse" id="collapseExample1">
+  <div class="card card-body">
+  
+```{r include=FALSE}
+library(viridis)
+```
+```{r eval=FALSE}
+library(viridis)
+```
+
+```{r}
+
+Bikeshare <- Bikeshare %>% 
+  mutate(holiday = as.factor(holiday),
+         weekday = as.factor(weekday))
+
+ggplot(Bikeshare, aes(holiday, registered)) + 
+  geom_violin(aes(col = holiday), fill = NA, draw_quantiles = 0.5)  +
+  labs(title = "Registered bikers on working days vs. holidays",
+       caption = "Data obtained from the ISLR2 package")
+
+ggplot(Bikeshare, aes(weekday, registered)) + 
+  geom_violin(aes(fill = weekday)) +
+  scale_fill_viridis_d(option = "B") + 
+  labs(title = "Registered bikers on each day of the week",
+       caption = "Data obtained from the ISLR2 package")
+
+```
+
+  </div>
+</div>
+
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+
+

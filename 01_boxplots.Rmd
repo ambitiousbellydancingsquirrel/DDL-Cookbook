@@ -1,5 +1,5 @@
 ---
-title: "DDL Cookbook"
+title: "DDL Cookbook 1 | Boxplots"
 output:
   html_document: default
   pdf_document: default
@@ -9,7 +9,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE,fig.width=8, fig.height=6)
 ```
 
-<font>
 ## Boxplots
 
 This is a boxplot.
@@ -150,6 +149,9 @@ to use scale_fill... and if we use colour, we need to use scale_colour...
 What are some of the other categorical variables in mpg?
 Do you think the type of drive train (drv) has any impact on the mileage?
 
+Try to make boxplots for iris, another dataset.
+Which variables (columns) can we make a boxplot for?
+Which variables (columns) can be used to segment the boxplots?
 
 <p>
   <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample1" role="button" aria-expanded="false" aria-controls="collapseExample1">
@@ -165,25 +167,6 @@ ggplot(mpg, aes(drv, hwy)) +
   scale_fill_viridis_d(option = "C")
 
 ```
-
-  </div>
-</div>
-
-
-
-Try to make boxplots for iris, another dataset.
-Which variables (columns) can we make a boxplot for?
-Which variables (columns) can be used to segment the boxplots?
-
-
-<p>
-  <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample1" role="button" aria-expanded="false" aria-controls="collapseExample1">
-    Click For Answer
-  </a>
-</p>
-<div class="collapse" id="collapseExample1">
-  <div class="card card-body">
-
 ```{r}
 ggplot(iris, aes(Species, Petal.Length)) + 
   geom_boxplot(aes(fill = Species), alpha = 0.5) + 
@@ -193,6 +176,9 @@ ggplot(iris, aes(Species, Petal.Length)) +
 
   </div>
 </div>
+
+
+
 
 &nbsp;
 &nbsp;

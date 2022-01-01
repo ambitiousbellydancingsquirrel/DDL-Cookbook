@@ -1,0 +1,308 @@
+---
+title: "DDL Cookbook 3 | Frequencies"
+author: "Pushkar Sarkar"
+date: "01/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Histograms
+
+## tidyverse
+
+Let's bring the tidyverse into R Studio.
+
+```{r include=FALSE}
+library(tidyverse)
+```
+```{r eval=FALSE}
+library(tidyverse)
+```
+
+# Histograms and Bar Plots
+
+What is the difference between a histogram and a bar plot? Let's compare the two side-by-side.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(mpg, aes(class)) + 
+  geom_bar() +
+  labs(title = "A bar plot")
+
+ggplot(mpg, aes(hwy)) + 
+  geom_histogram() + 
+  labs(title = "A histogram")
+
+```
+
+A bar plot counts the cars in each category. Our data has a lot of SUVs and not many 2-seaters or minivans. We don't know anything else about them right now, except how many of them there are. 
+
+A histogram, on the other hand, "counts" the cars based on their highway mileage. Most of the cars, be they SUVs or minivans (we don't know), seem to have an efficiency of between 15-30 miles per gallon on a highway.
+
+Unlike bar plots, histograms are a way of counting numerical data. Like boxplots or violin plots, they show us the spread of the data. 
+
+# The Brain Cancer Dataset
+
+Let's use the ISLR2 package again. This time, we'll explore the BrainCancer dataset, which has information on the results of a study conducted on survival times for patients diagnosed with brain cancer. Read more about this dataset at <https://cran.r-project.org/web//packages/ISLR2/ISLR2.pdf>. Take some time to understand the variables.
+
+```{r, warning = FALSE}
+library(ISLR2)
+BrainCancer <- BrainCancer %>% as_tibble()
+BrainCancer
+
+```
+
+What are the categories recorded? Among others, we have the sex, the type of brain cancer (diagnosis), and the status, which tracks whether the patient was alive at the end of the study.
+
+# Bar plots
+
+So how many male and female patients do we have?
+
+```{r}
+ggplot(BrainCancer, aes(sex)) + 
+  geom_bar()
+```
+
+We should know how to get this information as a table too.
+
+```{r}
+BrainCancer %>% count(sex)
+```
+
+What types of cancers do we have information for?
+
+```{r}
+ggplot(BrainCancer, aes(diagnosis)) + 
+  geom_bar()
+```
+
+
+```{r}
+BrainCancer %>% count(diagnosis)
+```
+
+We have a few NA values. Let's try and get rid of these.
+
+
+```{r}
+BrainCancer %>% 
+  filter(!is.na(diagnosis))
+```
+This filters everything that is <i>not</i> an NA in the diagnosis column. The is.na() function gets the NA values from a column. The ! means "not". 
+
+So now we have everything that is <i>not</i> an NA. We can see that this has 87 rows. The original had 88, so only one entry didn't have a diagnosis to it.
+
+We have to actually assign this to something, otherwise we'll just be using the original BrainCancer. We could assign it back to BrainCancer and change the original data, but let's create a new dataset.
+
+```{r}
+BrainCancer1 <- BrainCancer %>% 
+  filter(!is.na(diagnosis))
+BrainCancer1
+```
+
+And now let's bring up the barplot again using BrainCancer1 instead of BrainCancer.
+
+```{r}
+ggplot(BrainCancer1, aes(diagnosis)) + 
+  geom_bar()
+```
+
+
+# Histograms
+
+What are the numerical variables recorded? We have the size of the brain tumor (gtv). What are the largest, smallest and average sizes?
+
+```{r}
+BrainCancer1 %>%  
+  summarise(largest = max(gtv), 
+            smallest = min(gtv), 
+            average = mean(gtv))
+
+```
+
+The summarise() function creates a new table with different summaries. 
+We tell it to create a new column (which will be called "largest") and what should go in that column (the maximum value it can find in gtv).
+
+So the mean is around 8.7 cubic centimetres. Imagine something that big in your head!
+
+But does that mean that most of them are around that size? Or that many are smaller and many are larger, and they just average out to 8.7?
+
+To find out, we need to see the spread of the data.
+
+```{r, message = FALSE}
+ggplot(BrainCancer1, aes(gtv)) + 
+  geom_histogram()
+```
+
+So it looks like  most are between 0 and 16 cubic centimetres. More tumors are less than 8.7 cubic centimetres, and a few enormous ones in the 20's and 30's are actually pulling the average up. Good to know.
+
+# More questions
+
+So now we're armed with some insights from the data. We know how many men and women participated in this study and we know what types of tumors they had. We also know what the sizes of their tumors are.
+
+Could there be a difference in the sizes of tumors for men and women?
+
+We would have to split the histogram into two - one histogram for men and one for women.
+
+```{r, eval=FALSE}
+ggplot(BrainCancer1, aes(sex, gtv)) + 
+  geom_histogram()
+
+```
+
+
+We get an error! This is a bummer. The geom_histogram() function just doesn't understand what to do with a second variable. This makes sense, because by definition, it just finds the counts of one numerical variable. The count itself becomes the second variable.
+
+We can do it another way - by using facet_wrap().
+
+```{r}
+
+ggplot(BrainCancer1, aes(gtv, fill = sex)) + 
+  geom_histogram() + 
+  facet_wrap(~sex)
+
+```
+
+facet_wrap() splits one chart into multiple mini-charts on the basis of some category. Note that we put a tilde(~) before specifying sex. 
+
+So with this, we have two histograms, both of which are still just counting the tumor size, but with two different subsets of the data - one for males and one for females.
+
+From this we can see that there's not too much of a difference between the two sexes, but females seem to have slightly smaller brain tumors on average. Let's also get the actual numbers.
+
+```{r}
+BrainCancer1 %>% 
+  group_by(sex) %>% 
+  summarise(average = mean(gtv))
+
+```
+
+Whether this is significant or not, only a doctor could tell us.
+
+Let's ask another question - do women tend to have more of a certain type of tumor?
+
+For this, we don't need histograms any more, since we want to count categorical variables. So let's go back to geom_bar() and use facet_wrap().
+
+
+```{r}
+ggplot(BrainCancer1, aes(diagnosis)) + 
+  geom_bar() + 
+  facet_wrap(~sex)
+```
+
+By fiddling with the plot, we can represent this in other ways.
+
+```{r}
+ggplot(BrainCancer1, aes(sex)) + 
+  geom_bar() + 
+  facet_wrap(~diagnosis)
+```
+
+More women get diagnosed with meningloma and more men get diagnosed with both HG and LG glioma.
+
+Let's combine these different plots into a single plot. This means that we'll need to drop facet_wrap() and instead bring in that data through some other means. One way we can split it is on the basis of colour (or fill in ggplot2 terms).
+
+
+```{r}
+ggplot(BrainCancer1, aes(diagnosis, fill = sex)) + 
+  geom_bar()
+```
+
+So geom_bar() just counted how many meningloma cases there were, and then divided the male cases and female cases by colour. 
+
+Some further adjustments would make this more readable. The two colours stacking on top of each is a little hard to understand. There is a special argument for geom_bar() called "position". It shifts the positioning of the coloured bars.
+
+```{r}
+ggplot(BrainCancer1, aes(diagnosis, fill = sex)) + 
+  geom_bar(position = "dodge")
+```
+
+We can also do "dodge2" and "stack". Try them out and see what they do!
+
+# Homework
+
+There are other variables we didn't explore. The status column records whether the patient is alive or not. 0 means they are and 1 means they died during the study. How many are alive? 
+
+Does that depend on the diagnosis, the sex or the tumor size?
+
+<p>
+  <a class="btn btn-primary" data-toggle="collapse" href="#collapseExample1" role="button" aria-expanded="false" aria-controls="collapseExample1">
+    Click For Answer
+  </a>
+</p>
+<div class="collapse" id="collapseExample1">
+  <div class="card card-body">
+  
+```{r include=FALSE}
+library(viridis)
+```
+```{r eval=FALSE}
+library(viridis)
+```
+
+```{r}
+# Since status is a double, we need to convert it to a factor first
+
+BrainCancer1 <- BrainCancer1 %>% 
+  mutate(status = as.factor(status))
+
+ggplot(BrainCancer1, aes(status, fill = sex)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Patient status by sex",
+       subtitle = "More women lived and more men died",
+       caption = "Data obtained from the ISLR2 package")
+
+ggplot(BrainCancer1, aes(diagnosis, fill = status)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Tumor types and survival rates",
+       subtitle = "Meningloma patients had a high survival rate, but most HG glioma patients died",
+       caption = "Data obtained from the ISLR2 package")
+
+ggplot(BrainCancer1, aes(gtv)) +
+  geom_histogram() +
+  facet_wrap(~status) + 
+  labs(title = "Patient tumor size by status",
+       subtitle = "Smaller tumors have a higher chance of survival",
+       caption = "Data obtained from the ISLR2 package")
+
+
+```
+
+
+  </div>
+</div>
+
+
+
+Explore the other variables too!
+
+Finally, do you remember that NA value we removed? Let's pull it out once.
+
+```{r}
+BrainCancer %>% 
+  filter(is.na(diagnosis))
+```
+We actually have everything here except the diagnosis. Based on your insights into the rest of the data and how they affect or depend on the diagnosis, can you guess what type of tumor this person had?
+
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+
+
+
+
+
+
+
+
+
